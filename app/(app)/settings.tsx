@@ -1,46 +1,38 @@
-import { View, Text, StyleSheet, Switch, ToastAndroid, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Switch, PermissionsAndroid, Platform, Alert } from 'react-native';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { useState, useEffect } from 'react';
-import notifee, { AuthorizationStatus } from '@notifee/react-native';
-import {
-  startBatteryNotification,
-  stopBatteryNotification,
-  isNotificationEnabled,
-} from '@/lib/batteryNotificationService';
-import { Storage } from '@/lib/storage';
-
-export const STORAGE_KEY = 'battery-notification-enabled';
+import { useState } from 'react';
+import { BatteryNotification } from '@/lib/timeNotification';
 
 export default function Settings() {
-  const [batteryNotification, setBatteryNotification] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [enabled, setEnabled] = useState(false);
 
-  useEffect(() => {
-    isNotificationEnabled().then(setBatteryNotification);
-  }, []);
-
-  async function handleBatteryNotificationToggle(value: boolean) {
-    setIsLoading(true);
+  const handleToggle = async (value: boolean) => {
     try {
       if (value) {
-        // Request notification permissions
-        const settings = await notifee.requestPermission();
-        if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
-          ToastAndroid.show('Notification permission denied', ToastAndroid.SHORT);
-          return;
+        // Request notification permission on Android 13+
+        if (Platform.OS === 'android' && Platform.Version >= 33) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert('Permission denied', 'Notification permission is required');
+            return;
+          }
         }
 
-        await Storage.setItem(STORAGE_KEY, 'true');
-        await startBatteryNotification();
-        setBatteryNotification(true);
+        console.log('Starting battery notification service...');
+        const result = await BatteryNotification.start();
+        console.log('Service started:', result);
       } else {
-        await stopBatteryNotification();
-        setBatteryNotification(false);
+        console.log('Stopping battery notification service...');
+        await BatteryNotification.stop();
       }
-    } finally {
-      setIsLoading(false);
+      setEnabled(value);
+    } catch (error) {
+      console.error('Error toggling notification:', error);
+      Alert.alert('Error', String(error));
     }
-  }
+  };
 
   return (
     <ScreenBackground>
@@ -48,17 +40,13 @@ export default function Settings() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
           <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Battery percentage notification</Text>
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#4CAF50" />
-            ) : (
-              <Switch
-                value={batteryNotification}
-                onValueChange={handleBatteryNotificationToggle}
-                trackColor={{ false: '#444', true: '#4CAF50' }}
-                thumbColor={batteryNotification ? '#fff' : '#888'}
-              />
-            )}
+            <Text style={styles.settingLabel}>Battery notification</Text>
+            <Switch
+              value={enabled}
+              onValueChange={handleToggle}
+              trackColor={{ false: '#444', true: '#4CAF50' }}
+              thumbColor={enabled ? '#fff' : '#888'}
+            />
           </View>
         </View>
       </View>

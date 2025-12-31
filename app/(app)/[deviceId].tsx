@@ -8,17 +8,18 @@ import {AsyncDataUtils} from "@/lib/asyncdata";
 import {formatDate, formatHours, formatPercent} from "@/lib/format";
 import {Statistics} from "@/lib/statistics";
 import {WatchPower} from "@/lib/watchpower";
+import {GridCache} from "@/lib/gridCache";
 import {useTheme} from "@react-navigation/native";
 import {LinearGradient} from "expo-linear-gradient";
 import {useFocusEffect, useGlobalSearchParams, useNavigation} from "expo-router";
-import React, {useCallback, useEffect, useMemo, useRef} from "react";
+import {useAuthenticatedSessionData} from "@/contexts/session";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {AppState, BackHandler, InteractionManager, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView, Text, View} from "react-native";
 import {AnalogClock24} from "@/components/AnalogClock24";
 import {BatteryChart} from "@/components/BatteryChart";
 import {IndeterminateLinearProgress} from "@/components/IndeterminateLinearProgress";
 import {DatePicker} from "@/components/DatePicker";
 import {toISODateString} from "@/lib/utils";
-import {prepareBatteryNotificationData, updateBatteryNotification} from "@/lib/batteryNotificationService";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() &&
@@ -33,8 +34,10 @@ interface DeviceViewProps {
 function DeviceView({ device }: DeviceViewProps) {
   const navigation = useNavigation();
   const theme = useTheme();
+  const session = useAuthenticatedSessionData();
   const [datePickerOpen, setDatePickerOpen] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date());
+  const [hoursSinceLastGridOn, setHoursSinceLastGridOn] = useState<number | null>(null);
   const selectedDateRef = useRef<Date>(selectedDate);
   selectedDateRef.current = selectedDate;
 
@@ -84,16 +87,39 @@ function DeviceView({ device }: DeviceViewProps) {
     return () => subscription.remove();
   }, [reloadData]);
 
+  // Update grid cache and calculate hours since last grid on
   useEffect(() => {
-    if (! AsyncDataUtils.isSuccess(todayData)) {
+    if (!AsyncDataUtils.isSuccess(todayData)) {
       return;
     }
 
-    const batteryNotificationData = prepareBatteryNotificationData(todayData.data);
+    const updateGridCache = async () => {
+      // Update cache with today's data
+      let lastGridOn = await GridCache.updateFromData(todayData.data);
 
-    updateBatteryNotification(batteryNotificationData);
+      // If no grid on found and cache is empty, try fetching yesterday's data
+      if (!lastGridOn) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = toISODateString(yesterday);
 
-  }, [todayData]);
+        try {
+          const yesterdayResponse = await WatchPower.getDeviceData(session, device, yesterdayStr);
+          if (yesterdayResponse.type === 'success' && yesterdayResponse.data.length > 0) {
+            lastGridOn = await GridCache.updateFromData(yesterdayResponse.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch yesterday data for grid cache:', error);
+        }
+      }
+
+      // Calculate hours since last grid on
+      const hours = Statistics.getHoursSinceLastGridOn(lastGridOn);
+      setHoursSinceLastGridOn(hours);
+    };
+
+    updateGridCache();
+  }, [todayData, session, device]);
 
   const onRefresh = () => reloadData();
 
@@ -203,6 +229,11 @@ function DeviceView({ device }: DeviceViewProps) {
           */}
         <DashboardCard title="Grid Hours Today" content={`${formatHours(gridHoursToday.hours)}h`} icon="bolt" color="#00bfff" style={{ marginHorizontal: 16, marginTop: 20 }}>
           <Text style={{ color: "hsl(210 15% 65%)", marginTop: 4 }}>{formatPercent(gridHoursToday.percentage)} of the day</Text>
+          {hoursSinceLastGridOn !== null && !gridOn && (
+            <Text style={{ color: "hsl(210 15% 65%)", marginTop: 2 }}>
+              {formatHours(hoursSinceLastGridOn)}h since last grid
+            </Text>
+          )}
         </DashboardCard>
         <Card style={{ margin: 16, padding: 24 }}>
           <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>

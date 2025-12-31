@@ -1,7 +1,7 @@
 import { Drawer } from 'expo-router/drawer';
 import 'react-native-reanimated';
 
-import React, {useEffect, useMemo} from 'react';
+import React, {useMemo} from 'react';
 import {useLoadDevices, clearDevicesCache} from '@/hooks/useDevices';
 import {ActivityIndicator, Linking, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
@@ -12,9 +12,6 @@ import {DevicesProvider, useDevices} from '@/contexts/devices';
 import {useSession} from '@/contexts/session';
 import {Storage} from '@/lib/storage';
 import {ScreenBackground} from '@/components/ScreenBackground';
-import { prepareBatteryNotificationData, startBatteryNotification, updateBatteryNotification } from '@/lib/batteryNotificationService';
-
-const STORAGE_KEY = 'battery-notification-enabled';
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -23,27 +20,6 @@ export const unstable_settings = {
 export default function AppLayout() {
   const { data, reload } = useLoadDevices();
   const theme = useTheme();
-  const foregroundServiceStarted = React.useRef(false);
-
-  useEffect(() => {
-    if (foregroundServiceStarted.current) {
-      return;
-    }
-
-    // On app start, restart the foreground service if it was previously enabled
-    const run = async () => {
-      const enabled = await Storage.getItem(STORAGE_KEY);
-      if (enabled === 'true' && data.type === 'success') {
-        await startBatteryNotification();
-      }
-    };
-
-    foregroundServiceStarted.current = true;
-    run()
-      .catch((err) => {
-        console.error('Error starting foreground service on app launch:', err);
-      });
-  }, [data]);
 
   if (AsyncDataUtils.isLoading(data)) {
     return (

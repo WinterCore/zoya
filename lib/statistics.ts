@@ -122,6 +122,40 @@ export namespace Statistics {
     return latestPoint.gridVoltage > 0;
   }
 
+  /**
+   * Gets the timestamp of the last time the grid was on.
+   * Returns null if grid was never on in the provided data.
+   */
+  export const getLastGridOnTimestamp = (data: readonly WatchPower.InverterDataPoint[]): Date | null => {
+    if (data.length === 0) {
+      return null;
+    }
+
+    // Iterate backwards to find the last point where grid was on
+    for (let i = data.length - 1; i >= 0; i--) {
+      const point = data[i];
+      if (point.gridVoltage > 0) {
+        return new Date(point.timestamp.replace(' ', 'T'));
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculates hours since the grid was last on.
+   * Returns null if no last grid on timestamp is provided.
+   */
+  export const getHoursSinceLastGridOn = (lastGridOnTimestamp: Date | null): number | null => {
+    if (!lastGridOnTimestamp) {
+      return null;
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - lastGridOnTimestamp.getTime();
+    return diffMs / (1000 * 60 * 60);
+  }
+
   export interface HourlyBatteryLevel {
     readonly hour: number;
     readonly percentage: number;

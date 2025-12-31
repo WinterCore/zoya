@@ -14,9 +14,6 @@ importers:
       '@expo/vector-icons':
         specifier: ^15.0.3
         version: 15.0.3(expo-font@14.0.10(expo@54.0.30)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
-      '@notifee/react-native':
-        specifier: ^9.1.8
-        version: 9.1.8(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))
       '@react-native-community/datetimepicker':
         specifier: 8.4.4
         version: 8.4.4(expo@54.0.30)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -101,9 +98,6 @@ importers:
       react-native-android-widget:
         specifier: ^0.17.2
         version: 0.17.2(expo@54.0.30)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
-      react-native-background-timer:
-        specifier: ^2.4.1
-        version: 2.4.1(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))
       react-native-gesture-handler:
         specifier: ~2.28.0
         version: 2.28.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -135,9 +129,6 @@ importers:
       '@types/react':
         specifier: ~19.1.17
         version: 19.1.17
-      '@types/react-native-background-timer':
-        specifier: ^2.0.2
-        version: 2.0.2
       eslint:
         specifier: ^9.25.0
         version: 9.39.1
@@ -921,11 +912,6 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@notifee/react-native@9.1.8':
-    resolution: {integrity: sha512-Az/dueoPerJsbbjRxu8a558wKY+gONUrfoy3Hs++5OqbeMsR0dYe6P+4oN6twrLFyzAhEA1tEoZRvQTFDRmvQg==}
-    peerDependencies:
-      react-native: '*'
-
   '@radix-ui/primitive@1.1.3':
     resolution: {integrity: sha512-JTF99U/6XIjCBo0wqkU5sK10glYe27MRRsfwoiq5zzOEZLHU3A3KCMa5X/azekYRCJ0HlwI0crAXS/5dEHTzDg==}
 
@@ -1356,9 +1342,6 @@ packages:
 
   '@types/node@24.10.1':
     resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
-
-  '@types/react-native-background-timer@2.0.2':
-    resolution: {integrity: sha512-cMAep0M5yqUHjiiRPvGiviqiJYdI45KSjbI5ufsIFSQGFwHwrHJC/8yawNhy0G3Gix6fufWLsEj6jC5niUNHiQ==}
 
   '@types/react@19.1.17':
     resolution: {integrity: sha512-Qec1E3mhALmaspIrhWt9jkQMNdw6bReVu64mjvhbhq2NFPftLPVr+l1SZgmw/66WwBNpDh7ao5AT6gF5v41PFA==}
@@ -3532,11 +3515,6 @@ packages:
       expo:
         optional: true
 
-  react-native-background-timer@2.4.1:
-    resolution: {integrity: sha512-TE4Kiy7jUyv+hugxDxitzu38sW1NqjCk4uE5IgU2WevLv7sZacaBc6PZKOShNRPGirLl1NWkaG3LDEkdb9Um5g==}
-    peerDependencies:
-      react-native: '>=0.47.0'
-
   react-native-drawer-layout@4.2.0:
     resolution: {integrity: sha512-XFGK5RMcVhEqr2F4iH/cTXrcTm1uK3gIBNFPqHNO7rCXuXZTPBbQYA5yc9/Lqgw2KNQ3sAeHKvW6/WoTURo/eA==}
     peerDependencies:
@@ -5475,10 +5453,6 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@notifee/react-native@9.1.8(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))':
-    dependencies:
-      react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0)
-
   '@radix-ui/primitive@1.1.3': {}
 
   '@radix-ui/react-collection@1.1.7(@types/react@19.1.17)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
@@ -5953,8 +5927,6 @@ snapshots:
   '@types/node@24.10.1':
     dependencies:
       undici-types: 7.16.0
-
-  '@types/react-native-background-timer@2.0.2': {}
 
   '@types/react@19.1.17':
     dependencies:
@@ -8453,10 +8425,6 @@ snapshots:
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0)
     optionalDependencies:
       expo: 54.0.30(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.21)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
-
-  react-native-background-timer@2.4.1(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0)):
-    dependencies:
-      react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0)
 
   react-native-drawer-layout@4.2.0(react-native-gesture-handler@2.28.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native-reanimated@4.1.5(@babel/core@7.28.5)(react-native-worklets@0.5.1(@babel/core@7.28.5)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
     dependencies:
