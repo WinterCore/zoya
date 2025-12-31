@@ -9,10 +9,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
+import android.graphics.Color
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.json.JSONObject
@@ -164,7 +167,10 @@ class TimeNotificationService : Service() {
         }
 
         val subtitle = if (!gridOn && hoursSinceLastGridOn != null) {
-            "${formatHours(hoursSinceLastGridOn!!)}h since last grid"
+            val text = "${formatDuration(hoursSinceLastGridOn!!)} since last grid"
+            SpannableString(text).apply {
+                setSpan(ForegroundColorSpan(Color.YELLOW), 0, length, 0)
+            }
         } else {
             null
         }
@@ -183,19 +189,26 @@ class TimeNotificationService : Service() {
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
             .setProgress(100, batteryPercent, false)
+            .setColor(Color.GREEN)
             .build()
     }
 
-    private fun formatHours(hours: Double): String {
-        return String.format(Locale.US, "%.1f", hours)
+    private fun formatDuration(hours: Double): String {
+        val totalMinutes = (hours * 60).toInt()
+        val h = totalMinutes / 60
+        val m = totalMinutes % 60
+        val minuteStr = if (m == 1) "1 minute" else "$m minutes"
+        val hourStr = if (h == 1) "1 hour" else "$h hours"
+
+        return when {
+            h == 0 -> minuteStr
+            m == 0 -> hourStr
+            else -> "$hourStr and $minuteStr"
+        }
     }
 
     private fun formatWatts(watts: Int): String {
-        return if (watts >= 1000) {
-            String.format(Locale.US, "%.1fkW", watts / 1000.0)
-        } else {
-            "${watts}W"
-        }
+        return "%,dW".format(Locale.US, watts)
     }
 
     private fun fetchAndUpdateNotification() {

@@ -5,7 +5,7 @@ import {Card} from "@/components/ui/Card";
 import {useDevices} from "@/contexts/devices";
 import {useDeviceData} from "@/hooks/useDeviceData";
 import {AsyncDataUtils} from "@/lib/asyncdata";
-import {formatDate, formatHours, formatPercent} from "@/lib/format";
+import {formatDate, formatDuration, formatHours, formatPercent} from "@/lib/format";
 import {Statistics} from "@/lib/statistics";
 import {WatchPower} from "@/lib/watchpower";
 import {GridCache} from "@/lib/gridCache";
@@ -231,7 +231,7 @@ function DeviceView({ device }: DeviceViewProps) {
           <Text style={{ color: "hsl(210 15% 65%)", marginTop: 4 }}>{formatPercent(gridHoursToday.percentage)} of the day</Text>
           {hoursSinceLastGridOn !== null && !gridOn && (
             <Text style={{ color: "hsl(210 15% 65%)", marginTop: 2 }}>
-              {formatHours(hoursSinceLastGridOn)}h since last grid
+              {formatDuration(hoursSinceLastGridOn)} since last grid
             </Text>
           )}
         </DashboardCard>
