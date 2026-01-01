@@ -13,7 +13,10 @@
 </details>
 
 ## What is this 
+> Excuse the unpolished code. I've never worked with React Native and this project is half vibe coded!
+
 If you're unlucky enough to live in a country with barely any electricity and have a solar system installed. Zoya is an app that helps you track your battery level, usage, and grid hours.
+<br />
 
 ## Featuers
 - Clean UI that displays the current status of the battery (charging, wattage and grid status), how many hours the grid was on for the current day and when it was last on.
@@ -61,3 +64,7 @@ She got infected with Feline Panleukopenia (I think) and passed away within a fe
 </details>
 
 [Click here to see a video of tiny Zoya playing with a mouse](https://youtube.com/shorts/J93Lz-4Gv6g?si=iBLuHZ9PWwSf9spV)
+
+## Credits 
+- [davidsmfreire/watchpower-api](https://github.com/davidsmfreire/watchpower-api) for reverse engineering the WatchPower API and making it publicly available!
+- [Claude Code](https://claude.ai/) for coding more than half of the app for me (our end is near 😢)
