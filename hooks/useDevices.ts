@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from "react";
 import {AsyncData, AsyncDataUtils} from "@/lib/asyncdata";
 import {WatchPower} from "@/lib/watchpower";
-import {useAuthenticatedSessionData} from "@/contexts/session";
+import {useSession} from "@/contexts/session";
 import {Storage} from "@/lib/storage";
 
 const DEVICES_CACHE_KEY = "cachedDevices";
@@ -13,7 +13,7 @@ interface UseLoadDevicesResult {
 
 export const useLoadDevices = (): UseLoadDevicesResult => {
   const [data, setData] = React.useState<AsyncData<WatchPower.DeviceInfo[]>>(AsyncDataUtils.loading());
-  const session = useAuthenticatedSessionData();
+  const { withAuthRetry } = useSession();
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export const useLoadDevices = (): UseLoadDevicesResult => {
 
       // Fetch fresh data from network
       try {
-        const result = await WatchPower.getDevices(session);
+        const result = await withAuthRetry((session) => WatchPower.getDevices(session));
 
         if (abortController.signal.aborted) {
           return;
@@ -81,7 +81,7 @@ export const useLoadDevices = (): UseLoadDevicesResult => {
     return () => {
       abortController.abort();
     };
-  }, [session, nonce]);
+  }, [withAuthRetry, nonce]);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
 

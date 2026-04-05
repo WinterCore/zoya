@@ -36,6 +36,9 @@ class TimeNotificationService : Service() {
 
         const val EXTRA_TOKEN = "token"
         const val EXTRA_SECRET = "secret"
+        const val EXTRA_EXPIRES_AT = "expiresAt"
+        const val EXTRA_EMAIL = "email"
+        const val EXTRA_PASSWORD = "password"
         const val EXTRA_DEVICE_PN = "devicePn"
         const val EXTRA_DEVICE_SN = "deviceSn"
         const val EXTRA_DEVICE_CODE = "deviceCode"
@@ -56,6 +59,7 @@ class TimeNotificationService : Service() {
 
     private var token: String = ""
     private var secret: String = ""
+    private var expiresAt: Long = 0
     private var devicePn: String = ""
     private var deviceSn: String = ""
     private var deviceCode: Int = 0
@@ -88,6 +92,7 @@ class TimeNotificationService : Service() {
             // Fresh start with credentials from JS - save them
             token = intentToken
             secret = intent.getStringExtra(EXTRA_SECRET) ?: ""
+            expiresAt = intent.getLongExtra(EXTRA_EXPIRES_AT, 0)
             devicePn = intent.getStringExtra(EXTRA_DEVICE_PN) ?: ""
             deviceSn = intent.getStringExtra(EXTRA_DEVICE_SN) ?: ""
             deviceCode = intent.getIntExtra(EXTRA_DEVICE_CODE, 0)
@@ -97,6 +102,9 @@ class TimeNotificationService : Service() {
             prefs.edit().apply {
                 putString(EXTRA_TOKEN, token)
                 putString(EXTRA_SECRET, secret)
+                putLong(EXTRA_EXPIRES_AT, expiresAt)
+                putString(EXTRA_EMAIL, intent.getStringExtra(EXTRA_EMAIL) ?: "")
+                putString(EXTRA_PASSWORD, intent.getStringExtra(EXTRA_PASSWORD) ?: "")
                 putString(EXTRA_DEVICE_PN, devicePn)
                 putString(EXTRA_DEVICE_SN, deviceSn)
                 putInt(EXTRA_DEVICE_CODE, deviceCode)
@@ -108,6 +116,7 @@ class TimeNotificationService : Service() {
             // Restart - load from SharedPreferences
             token = prefs.getString(EXTRA_TOKEN, "") ?: ""
             secret = prefs.getString(EXTRA_SECRET, "") ?: ""
+            expiresAt = prefs.getLong(EXTRA_EXPIRES_AT, 0)
             devicePn = prefs.getString(EXTRA_DEVICE_PN, "") ?: ""
             deviceSn = prefs.getString(EXTRA_DEVICE_SN, "") ?: ""
             deviceCode = prefs.getInt(EXTRA_DEVICE_CODE, 0)
@@ -211,11 +220,60 @@ class TimeNotificationService : Service() {
         return "%,dW".format(Locale.US, watts)
     }
 
+    private fun refreshSessionIfNeeded() {
+        if (System.currentTimeMillis() < expiresAt) return
+
+        val email = prefs.getString(EXTRA_EMAIL, "") ?: ""
+        val password = prefs.getString(EXTRA_PASSWORD, "") ?: ""
+
+        if (email.isEmpty() || password.isEmpty()) {
+            Log.w(TAG, "Session expired but no credentials stored for re-login")
+            return
+        }
+
+        Log.i(TAG, "Session expired, re-logging in...")
+        try {
+            val passwordHash = sha1(password)
+            val salt = generateHashedSalt()
+            val baseParams = "&action=authSource&usr=$email&company-key=bnrl_frRFjEz8Mkn&$SUFFIX_CONTEXT"
+            val signature = sha1(salt + passwordHash + baseParams)
+
+            val url = "${BASE_URL}?sign=$signature&salt=$salt$baseParams"
+            val connection = URL(url).openConnection()
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+
+            val response = connection.getInputStream().bufferedReader().readText()
+            val json = JSONObject(response)
+
+            if (json.optInt("err", -1) != 0) {
+                Log.e(TAG, "Re-login failed with err: ${json.optInt("err")}")
+                return
+            }
+
+            val dat = json.getJSONObject("dat")
+            token = dat.getString("token")
+            secret = dat.getString("secret")
+            expiresAt = System.currentTimeMillis() + dat.getLong("expire") * 1000
+
+            prefs.edit().apply {
+                putString(EXTRA_TOKEN, token)
+                putString(EXTRA_SECRET, secret)
+                putLong(EXTRA_EXPIRES_AT, expiresAt)
+                apply()
+            }
+            Log.i(TAG, "Re-login successful, new token expires at $expiresAt")
+        } catch (e: Exception) {
+            Log.e(TAG, "Re-login failed", e)
+        }
+    }
+
     private fun fetchAndUpdateNotification() {
         executor.execute {
             try {
                 val now = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
                 Log.i(TAG, "[$now] Fetching battery data...")
+                refreshSessionIfNeeded()
                 val data = fetchBatteryData()
                 if (data != null) {
                     batteryPercent = data.batteryPercent

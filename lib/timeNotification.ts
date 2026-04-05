@@ -16,16 +16,21 @@ export const BatteryNotification = {
       throw new Error('TimeNotificationModule is not available. Did you rebuild the app?');
     }
 
-    // Get session and device data from storage
+    // Get session, credentials and device data from storage
     const sessionDataStr = await Storage.getItem('sessionData');
     const cachedDevicesStr = await Storage.getItem(DEVICES_CACHE_KEY);
+    const credentialsStr = await Storage.getItem('credentials');
 
     if (!sessionDataStr || !cachedDevicesStr) {
       throw new Error('Missing session or device data. Please log in first.');
     }
+    if (!credentialsStr) {
+      throw new Error('Missing credentials. Please log in again.');
+    }
 
     const sessionData: WatchPower.SessionData = JSON.parse(sessionDataStr);
     const devices: WatchPower.DeviceInfo[] = JSON.parse(cachedDevicesStr);
+    const credentials: { email: string; password: string } = JSON.parse(credentialsStr);
 
     if (devices.length === 0) {
       throw new Error('No devices available.');
@@ -34,7 +39,13 @@ export const BatteryNotification = {
     const device = devices[0];
 
     return TimeNotificationModule.startService(
-      { token: sessionData.token, secret: sessionData.secret },
+      {
+        token: sessionData.token,
+        secret: sessionData.secret,
+        expiresAt: sessionData.expiresAt,
+        email: credentials.email,
+        password: credentials.password,
+      },
       { pn: device.pn, sn: device.sn, devcode: device.devcode, devaddr: device.devaddr }
     );
   },

@@ -2,11 +2,11 @@ import React, {useCallback, useEffect, useState} from "react";
 import {toISODateString} from "@/lib/utils";
 import {WatchPower} from "@/lib/watchpower";
 import {AsyncData, AsyncDataUtils} from "@/lib/asyncdata";
-import {useAuthenticatedSessionData} from "@/contexts/session";
+import {useSession} from "@/contexts/session";
 
 export const useDeviceData = (deviceInfo: WatchPower.DeviceInfo, isoDateString: string = toISODateString(new Date())) => {
   const [data, setData] = React.useState<AsyncData<readonly WatchPower.InverterDataPoint[]>>(AsyncDataUtils.loading());
-  const session = useAuthenticatedSessionData();
+  const { withAuthRetry } = useSession();
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const useDeviceData = (deviceInfo: WatchPower.DeviceInfo, isoDateString: 
       setData(AsyncDataUtils.loadingWithData);
 
       try {
-        const dayData = await WatchPower.getDeviceData(session, deviceInfo, isoDateString);
+        const dayData = await withAuthRetry((session) => WatchPower.getDeviceData(session, deviceInfo, isoDateString));
 
         if (abortController.signal.aborted) {
           return;
@@ -36,7 +36,7 @@ export const useDeviceData = (deviceInfo: WatchPower.DeviceInfo, isoDateString: 
     load();
 
     return () => abortController.abort();
-  }, [session, deviceInfo, isoDateString, nonce]);
+  }, [withAuthRetry, deviceInfo, isoDateString, nonce]);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
 

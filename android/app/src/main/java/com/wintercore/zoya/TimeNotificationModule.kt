@@ -18,6 +18,9 @@ class TimeNotificationModule(reactContext: ReactApplicationContext) : ReactConte
             val intent = Intent(reactApplicationContext, TimeNotificationService::class.java).apply {
                 putExtra(TimeNotificationService.EXTRA_TOKEN, sessionData.getString("token"))
                 putExtra(TimeNotificationService.EXTRA_SECRET, sessionData.getString("secret"))
+                putExtra(TimeNotificationService.EXTRA_EXPIRES_AT, sessionData.getDouble("expiresAt").toLong())
+                putExtra(TimeNotificationService.EXTRA_EMAIL, sessionData.getString("email"))
+                putExtra(TimeNotificationService.EXTRA_PASSWORD, sessionData.getString("password"))
                 putExtra(TimeNotificationService.EXTRA_DEVICE_PN, deviceData.getString("pn"))
                 putExtra(TimeNotificationService.EXTRA_DEVICE_SN, deviceData.getString("sn"))
                 putExtra(TimeNotificationService.EXTRA_DEVICE_CODE, deviceData.getInt("devcode"))

@@ -11,7 +11,6 @@ import {
   Image,
 } from "react-native";
 import {DarkTheme} from "@react-navigation/native";
-import Checkbox from "@/components/Checkbox";
 import {WatchPower} from "@/lib/watchpower";
 import {Storage} from "@/lib/storage";
 import {useSession} from "@/contexts/session";
@@ -20,7 +19,6 @@ import {ScreenBackground} from "@/components/ScreenBackground";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [saveCredentials, setSaveCredentials] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
   const { setSession } = useSession();
@@ -38,10 +36,8 @@ export default function Login() {
         return;
       }
 
-      if (saveCredentials) {
-        await Storage.setItem("sessionData", JSON.stringify(loginResult.data));
-        await Storage.setItem("credentials", JSON.stringify({ email: username, password }));
-      }
+      await Storage.setItem("sessionData", JSON.stringify(loginResult.data));
+      await Storage.setItem("credentials", JSON.stringify({ email: username, password }));
 
       setSession(loginResult.data);
     } catch (error) {
@@ -84,7 +80,6 @@ export default function Login() {
             value={password}
             onChangeText={setPassword}
           />
-          <Checkbox style={styles.checkbox} label="Save Credentials" value={saveCredentials} onChange={setSaveCredentials} />
           <Text style={styles.error}>{error ? error : <>&nbsp;</>}</Text>
 
           <TouchableOpacity
@@ -196,9 +191,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textDecorationLine: "underline",
   },
-  checkbox: {
-    marginTop: 16,
-    userSelect: "none",
-  }
 });
 
