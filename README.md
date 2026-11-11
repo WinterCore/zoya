@@ -1,68 +1,87 @@
 # Zoya ☀️
 
 <div align="center">
-<img width="200" src="assets/images/logo.png" />
+<img width="160" src="public/logo.png" />
 </div>
-<br />
-<br />
-<details>
-  <summary>Click to see the full user interface</summary>
-  <div align="center">
-    <img width="400" src="assets/app.jpg" />
-  </div>
-</details>
 
-## What is this 
-> Excuse the unpolished code. I've never worked with React Native and this project is half vibe coded!
+Zoya shows the battery level, load, solar input and grid hours of inverters that work with the
+[WatchPower](https://play.google.com/store/apps/details?id=wifiapp.volfw.watchpower) app.
 
-If you're unlucky enough to live in a country with barely any electricity and have a solar system installed. Zoya is an app that helps you track your battery level, usage, and grid hours.
-<br />
+This is the React + Tailwind + TypeScript rewrite of the original Expo / React Native app, packaged
+for Android with [Capacitor](https://capacitorjs.com).
 
-## Featuers
-- Clean UI that displays the current status of the battery (charging, wattage and grid status), how many hours the grid was on for the current day and when it was last on.
-  <img src="assets/battery-status.jpg" width="360" alt="Battery status user interface" />
-- 24 hour clock that highlights the periods when the grid was on.
-  <img src="assets/grid-periods.jpg" width="360" alt="Grid periods clock" />
-  <img src="assets/grid-periods-tooltip.jpg" width="360" alt="Grid periods clock" />
-- Battery level chart that displays the battery percentage throughout the day.
-  <img src="assets/battery-levels.jpg" width="360" alt="Battery levels" />
-- Live notification that fetches and displays useful information in real time.
-  <img src="assets/notification.jpg" width="360" alt="Live Notification" />
+## Features
 
-## How to use 
-This app relies on the WatchPower API used by the [WatchPower Android App](https://play.google.com/store/apps/details?id=wifiapp.volfw.watchpower&hl=en). I'm not a 100% sure which inverters work with this app but I think most of the ones made by Voltronic should work fine.
-<br />
-**Basically, any inverter that works with the WatchPower app will work with this app!**
-- This app DOES NOT support signups, you need to download the Watchpower [Android](https://play.google.com/store/apps/details?id=wifiapp.volfw.watchpower&hl=en) or [IOS](https://play.google.com/store/apps/details?id=wifiapp.volfw.watchpower&hl=en) App, create a new account and configure your inverter and connect it to your WiFi!
-- Download and install the Zoya App, and login with your WatchPower credentials.
-- The app will fetch all of your devices and list them in the side drawer and will always launch and display the data for the first device by default!
-- Enjoy!
+- Energy flow card: battery, solar and grid status with the current load.
+- **Day card.** For today or any earlier day (‹ › or tap the date to pick one):
+  - a strip showing when the grid was on, with the list of on-periods and total grid hours, plus
+    how long the grid has been on or off right now
+  - battery % for every reading (about every 5 minutes) on a fixed 0–100% scale
+  - usage as 15-minute average watts, with solar drawn over it on days that had any
+  - totals: energy drawn from and charged into the battery, lowest battery % and peak load
+  - all charts share one time axis; drag across them to read the exact values at any moment
+  - pinch to zoom into part of the day (down to one hour) and drag with two fingers to move
+    around; zoomed in to 8 hours or less, usage switches to 5-minute bars
+- **Grid hours, last 7 days.** Tap a day to open it in the day card. Finished days are cached on
+  the phone (for 14 days), so each is downloaded once and stays viewable offline.
+- **Multiple accounts.** Log in with several WatchPower accounts. Saved accounts are listed on the
+  login screen, so switching back is one tap. The sidebar lists the devices of every saved account,
+  grouped by username. Logout returns to the login screen and keeps saved accounts. Use ✕ on the
+  login screen to remove one.
+- **Rename devices.** Long-press a device in the sidebar or tap the pencil in the header. Names are
+  kept only on this phone.
+- Pull down to refresh; data also refreshes when the app returns to the foreground.
 
-## Enabling the battery status live notification
-To enable battery status live notification you can go to settings and flick the "Battery notification" switch.
-<br />
-As of right now, the notification will only display the status of the first device that you have associated with your account. This is a limtiation that I may or may not fix in the future!
-<br />
-<br />
-The notification will refresh its data **every ~2.5 minutes**. The interval heavily depends on when Android decides to allow the foreground service to run.
-**For best results, you need to disable battery optimizations for the app in the settings!**
+Not in this version yet: the battery live notification.
 
+While the grid is on, many setups power the house straight from the grid, so the inverter reports
+almost no load; usage then mostly shows what was drawn from the battery.
 
-## Who is Zoya
-This app was named after a very lovely and special cat.
-<br />
-Zoya was a lovely street cat who lived in our small garden along with 10 other cats that we feed and take care of.
-She got infected with Feline Panleukopenia (I think) and passed away within a few days.
+## Development
 
-<details>
-  <summary>Expand to see pictures of Zoya</summary>
-  <div align="center">
-    <img src="assets/zoya-01.jpeg" />
-    <img src="assets/zoya-02.jpeg" />
-    <img src="assets/zoya-03.jpeg" />
-  </div>
-</details>
+Requirements: Node 22+, pnpm, Android Studio (its bundled JDK 21 is used for Gradle builds).
 
-## Credits 
-- [davidsmfreire/watchpower-api](https://github.com/davidsmfreire/watchpower-api) for reverse engineering the WatchPower API and making it publicly available!
-- [Claude Code](https://claude.ai/) for coding more than half of the app for me (our end is near 😢)
+```sh
+pnpm install
+pnpm dev        # http://localhost:5173 (API requests go through the Vite proxy)
+pnpm lint
+pnpm typecheck
+```
+
+## Android
+
+```sh
+pnpm android    # build, sync and run on a connected device or emulator
+pnpm apk        # build a debug APK at android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Both scripts use `$JAVA_HOME`, falling back to Android Studio's JDK at
+`/Applications/Android Studio.app/Contents/jbr/Contents/Home`.
+
+Debug builds are signed with `android/app/debug.keystore`, the same key as the Expo build, so the
+APK installs over a debug build of the old app.
+
+## How it works
+
+- `src/lib/watchpower.ts`: WatchPower API client (request signing, response parsing).
+- `src/lib/http.ts`: GET requests. Native builds use `CapacitorHttp`, because the API is plain HTTP
+  without CORS; requests time out after 15s (connect) and 30s (read).
+- `src/lib/storage.ts`: everything persisted goes through
+  [`@aparajita/capacitor-secure-storage`](https://github.com/aparajita/capacitor-secure-storage).
+  On Android each value is encrypted with AES-GCM using a key held in the Android Keystore.
+  Capacitor's own logging is turned off (`loggingBehavior: "none"`), so decrypted values and session
+  tokens never reach logcat.
+- `src/contexts/accounts.tsx`: saved accounts, sessions (renewed automatically when they expire),
+  and the signed-in state.
+- `src/contexts/devices.tsx`: device lists for all accounts, cached for a fast start.
+- `src/contexts/deviceNames.tsx`: local device names.
+- `src/lib/daySeries.ts`, `src/lib/statistics.ts`: one day of readings in a compact form, and the
+  grid periods, averages and totals computed from it.
+- `src/lib/dayCache.ts`, `src/hooks/useDayHistory.ts`: past days, cache first, then the API.
+- `src/components/day/`: the day card and its hand-drawn SVG charts.
+
+## Credits
+
+- [davidsmfreire/watchpower-api](https://github.com/davidsmfreire/watchpower-api) for reverse
+  engineering the WatchPower API.
+- Named after Zoya, a lovely street cat.

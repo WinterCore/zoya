@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* Colours carried over from the React Native StyleSheets. */
+@theme {
+  --color-night: hsl(220 20% 8%);
+  --color-dusk: hsl(220 15% 18%);
+  --color-card: hsl(220 18% 12%);
+  --color-line: hsl(220 15% 20%);
+  --color-muted: hsl(210 15% 65%);
+  --color-subtle: #888;
+  --color-grid: #00bfff;
+  --color-primary: rgb(10 132 255);
+  --color-danger: #ff7074;
+  --color-error: #ffb3b3;
+  --color-active: darkcyan;
+  --color-link: #3b82f6;
+
+  /* Chart series. Grid, battery and solar match the energy-flow card; the
+     colours sharing a chart stay apart for colour-blind readers. */
+  --color-battery: #22c55e;
+  --color-load: #f472b6;
+  --color-solar: #f59e0b;
+
+  --font-sans: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* The bar is 30% wide, so 233% of its own width reaches the right edge. */
+  --animate-progress: progress 1s ease-in-out infinite alternate;
+
+  @keyframes progress {
+    from { transform: translateX(0); }
+    to { transform: translateX(233.33%); }
+  }
+}
+
+/* Safe-area insets: Capacitor injects --safe-area-inset-*; browsers use env(). */
+@utility pt-safe {
+  padding-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+}
+
+@utility pb-safe {
+  padding-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-night);
+    color: white;
+    font-family: var(--font-sans);
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Material-style indeterminate circular spinner (Android's ActivityIndicator). */
+.spinner {
+  animation: spinner-rotate 2s linear infinite;
+}
+
+.spinner circle {
+  stroke-dasharray: 1 150;
+  stroke-dashoffset: 0;
+  animation: spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinner-dash {
+  0% { stroke-dasharray: 1 150; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90 150; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90 150; stroke-dashoffset: -124; }
+}
+
+/* A dot that travels from (--x1, --y1) to (--x2, --y2), fading at both ends. */
+.flow-dot {
+  animation: flow-dot 1.65s linear infinite;
+}
+
+@keyframes flow-dot {
+  0% { transform: translate(var(--x1), var(--y1)); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(var(--x2), var(--y2)); opacity: 0; }
+}
+
+.screen-gradient {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--color-night),
+    var(--color-dusk),
+    var(--color-night)
+  );
+}
