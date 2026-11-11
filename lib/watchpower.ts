@@ -233,63 +233,152 @@ export namespace WatchPower {
     }[];
     readonly title: {
       readonly title: string;
-      readonly isDisplay: number;
+      readonly unit?: string;
+      readonly isDisplay?: number;
     }[];
   }
 
+  /**
+   * Maps each InverterDataPoint field to the `title` name the API reports for
+   * it. The API docs guarantee title[x] corresponds 1:1 with row[x].field[x],
+   * and the vendor has already reordered this layout once (firmware/measurement
+   * columns moved ahead of the rating columns, PV2 columns dropped), so parsing
+   * positionally is not safe.
+   */
+  const FIELD_TITLES = {
+    serialNumber: "SN",
+    machineType: "Machine Type",
+    gridRatingVoltage: "Grid Rating Voltage",
+    gridRatingCurrent: "Grid Rating Current",
+    batteryRatingVoltage: "Battery Rating Voltage",
+    acOutputRatingVoltage: "AC Output Rating Voltage",
+    acOutputRatingCurrent: "AC Output Rating Current",
+    acOutputRatingFrequency: "AC Output Rating Frequency",
+    acOutputRatingApparentPower: "AC Output Rating Apparent Power",
+    acOutputRatingActivePower: "AC Output Rating Active Power",
+    mainCpuFirmwareVersion: "Main CPU Firmware Version",
+    secondaryCpuFirmwareVersion: "Secondary CPU Firmware Version",
+    pv2InputVoltage: "PV2 Input Voltage",
+    gridVoltage: "Grid Voltage",
+    gridFrequency: "Grid Frequency",
+    pv2ChargingPower: "PV2 Charging Power",
+    pv1InputVoltage: "PV1 Input Voltage",
+    pv1ChargingPower: "PV1 Charging Power",
+    batteryVoltage: "Battery Voltage",
+    batteryCapacity: "Battery Capacity",
+    batteryChargingCurrent: "Battery Charging Current",
+    batteryDischargeCurrent: "Battery Discharge Current",
+    ac1OutputVoltage: "AC Output Voltage",
+    ac1OutputFrequency: "AC Output Frequency",
+    ac1OutputApparentPower: "AC Output Apparent Power",
+    acOutputActivePower: "AC Output Active Power",
+    outputLoadPercent: "Output Load Percent",
+    ac2OutputStatus: "AC2 Output Status",
+    batteryReChargeVoltage: "Battery Re-Charge Voltage",
+    batteryBulkVoltage: "Battery Bulk Voltage",
+    batteryFloatVoltage: "Battery Float Voltage",
+    batteryType: "Battery Type",
+    maxAcChargingCurrent: "Max AC Charging Current",
+    maxChargingCurrent: "Max Charging Current",
+    acInputRange: "AC Input Range",
+    outputSourcePriority: "Output Source Priority",
+    chargerSourcePriority: "Charger Source Priority",
+    parallelMaxNum: "Parallel Max Num",
+    batteryReDischargeVoltage: "Battery Re-Discharge Voltage",
+    busVoltage: "BUS Voltage",
+    pv1InputCurrent: "PV1 Input Current",
+    batteryVoltageFromScc: "Battery Voltage From SCC",
+    loadStatus: "Load Status",
+    solarFeedToGridPower: "Solar Feed To Grid Power",
+    pv2InputCurrent: "PV2 Input Current",
+    model: "Model",
+    totalGeneration: "Total Generation",
+  } as const satisfies Record<
+    Exclude<keyof InverterDataPoint, "id" | "timestamp">,
+    string
+  >;
+
+  /** Lowercased title -> index into each row's field array. */
+  const buildTitleIndex = (titles: readonly { readonly title: string }[]): ReadonlyMap<string, number> => {
+    const index = new Map<string, number>();
+    titles.forEach((entry, i) => {
+      const key = entry.title.trim().toLowerCase();
+      if (!index.has(key)) {
+        index.set(key, i);
+      }
+    });
+    return index;
+  };
+
+  const num = (raw: string | undefined): number => {
+    const parsed = parseFloat(raw ?? "");
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const str = (raw: string | undefined): string => raw ?? "";
+
   export const parseInverterData = (rawData: InverterRawData): InverterDataPoint[] => {
+    const titleIndex = buildTitleIndex(rawData.title ?? []);
+
+    // Per the API docs, field[0] is always the row id and field[1] is always
+    // the timestamp, regardless of locale or layout — those stay positional.
     return rawData.row.map(row => {
       const field = row.field;
+      const valueOf = (key: keyof typeof FIELD_TITLES): string | undefined => {
+        const idx = titleIndex.get(FIELD_TITLES[key].toLowerCase());
+        return idx === undefined ? undefined : field[idx];
+      };
+
       return {
         id: field[0],
         timestamp: field[1],
-        serialNumber: field[2],
-        machineType: field[3],
-        gridRatingVoltage: parseFloat(field[4]),
-        gridRatingCurrent: parseFloat(field[5]),
-        batteryRatingVoltage: parseFloat(field[6]),
-        acOutputRatingVoltage: parseFloat(field[7]),
-        acOutputRatingCurrent: parseFloat(field[8]),
-        acOutputRatingFrequency: parseFloat(field[9]),
-        acOutputRatingApparentPower: parseInt(field[10]),
-        acOutputRatingActivePower: parseInt(field[11]),
-        mainCpuFirmwareVersion: field[12],
-        secondaryCpuFirmwareVersion: field[13],
-        pv2InputVoltage: parseFloat(field[14]),
-        gridVoltage: parseFloat(field[15]),
-        gridFrequency: parseFloat(field[16]),
-        pv2ChargingPower: parseInt(field[17]),
-        pv1InputVoltage: parseFloat(field[18]),
-        pv1ChargingPower: parseInt(field[19]),
-        batteryVoltage: parseFloat(field[20]),
-        batteryCapacity: parseInt(field[21]),
-        batteryChargingCurrent: parseInt(field[22]),
-        batteryDischargeCurrent: parseInt(field[23]),
-        ac1OutputVoltage: parseFloat(field[24]),
-        ac1OutputFrequency: parseFloat(field[25]),
-        ac1OutputApparentPower: parseInt(field[26]),
-        acOutputActivePower: parseInt(field[27]),
-        outputLoadPercent: parseInt(field[28]),
-        ac2OutputStatus: field[29],
-        batteryReChargeVoltage: parseFloat(field[30]),
-        batteryBulkVoltage: parseFloat(field[31]),
-        batteryFloatVoltage: parseFloat(field[32]),
-        batteryType: field[33],
-        maxAcChargingCurrent: parseFloat(field[34]),
-        maxChargingCurrent: parseFloat(field[35]),
-        acInputRange: field[36],
-        outputSourcePriority: field[37],
-        chargerSourcePriority: field[38],
-        parallelMaxNum: field[39],
-        batteryReDischargeVoltage: parseFloat(field[40]),
-        busVoltage: parseInt(field[41]),
-        pv1InputCurrent: parseInt(field[42]),
-        batteryVoltageFromScc: parseFloat(field[43]),
-        loadStatus: field[44],
-        solarFeedToGridPower: parseInt(field[45]),
-        pv2InputCurrent: parseFloat(field[46]),
-        model: field[47],
-        totalGeneration: parseInt(field[48]),
+        serialNumber: str(valueOf("serialNumber")),
+        machineType: str(valueOf("machineType")),
+        gridRatingVoltage: num(valueOf("gridRatingVoltage")),
+        gridRatingCurrent: num(valueOf("gridRatingCurrent")),
+        batteryRatingVoltage: num(valueOf("batteryRatingVoltage")),
+        acOutputRatingVoltage: num(valueOf("acOutputRatingVoltage")),
+        acOutputRatingCurrent: num(valueOf("acOutputRatingCurrent")),
+        acOutputRatingFrequency: num(valueOf("acOutputRatingFrequency")),
+        acOutputRatingApparentPower: num(valueOf("acOutputRatingApparentPower")),
+        acOutputRatingActivePower: num(valueOf("acOutputRatingActivePower")),
+        mainCpuFirmwareVersion: str(valueOf("mainCpuFirmwareVersion")),
+        secondaryCpuFirmwareVersion: str(valueOf("secondaryCpuFirmwareVersion")),
+        pv2InputVoltage: num(valueOf("pv2InputVoltage")),
+        gridVoltage: num(valueOf("gridVoltage")),
+        gridFrequency: num(valueOf("gridFrequency")),
+        pv2ChargingPower: num(valueOf("pv2ChargingPower")),
+        pv1InputVoltage: num(valueOf("pv1InputVoltage")),
+        pv1ChargingPower: num(valueOf("pv1ChargingPower")),
+        batteryVoltage: num(valueOf("batteryVoltage")),
+        batteryCapacity: num(valueOf("batteryCapacity")),
+        batteryChargingCurrent: num(valueOf("batteryChargingCurrent")),
+        batteryDischargeCurrent: num(valueOf("batteryDischargeCurrent")),
+        ac1OutputVoltage: num(valueOf("ac1OutputVoltage")),
+        ac1OutputFrequency: num(valueOf("ac1OutputFrequency")),
+        ac1OutputApparentPower: num(valueOf("ac1OutputApparentPower")),
+        acOutputActivePower: num(valueOf("acOutputActivePower")),
+        outputLoadPercent: num(valueOf("outputLoadPercent")),
+        ac2OutputStatus: str(valueOf("ac2OutputStatus")),
+        batteryReChargeVoltage: num(valueOf("batteryReChargeVoltage")),
+        batteryBulkVoltage: num(valueOf("batteryBulkVoltage")),
+        batteryFloatVoltage: num(valueOf("batteryFloatVoltage")),
+        batteryType: str(valueOf("batteryType")),
+        maxAcChargingCurrent: num(valueOf("maxAcChargingCurrent")),
+        maxChargingCurrent: num(valueOf("maxChargingCurrent")),
+        acInputRange: str(valueOf("acInputRange")),
+        outputSourcePriority: str(valueOf("outputSourcePriority")),
+        chargerSourcePriority: str(valueOf("chargerSourcePriority")),
+        parallelMaxNum: str(valueOf("parallelMaxNum")),
+        batteryReDischargeVoltage: num(valueOf("batteryReDischargeVoltage")),
+        busVoltage: num(valueOf("busVoltage")),
+        pv1InputCurrent: num(valueOf("pv1InputCurrent")),
+        batteryVoltageFromScc: num(valueOf("batteryVoltageFromScc")),
+        loadStatus: str(valueOf("loadStatus")),
+        solarFeedToGridPower: num(valueOf("solarFeedToGridPower")),
+        pv2InputCurrent: num(valueOf("pv2InputCurrent")),
+        model: str(valueOf("model")),
+        totalGeneration: num(valueOf("totalGeneration")),
       };
     });
   };
