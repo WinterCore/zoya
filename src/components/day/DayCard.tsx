@@ -124,30 +124,48 @@ interface ReadoutProps {
   readonly onClose: () => void;
 }
 
-/** What the chart shows at the cursor; sits above the charts so the finger doesn't cover it. */
+const ReadoutValue = ({ dot, label, value }: { dot: string; label: string; value: string }) => {
+  return (
+    <span className="flex items-center gap-1.5">
+      <Dot className={dot} />
+      <span className="text-muted">{label}</span>
+      {value}
+    </span>
+  );
+};
+
+/**
+ * What the chart shows at the cursor; sits above the charts so the finger doesn't cover it.
+ * Two rows tall, idle or not, so the charts don't jump when it appears.
+ */
 const Readout = ({ time, sample, onClose }: ReadoutProps) => {
   if (time === null) {
-    return <p className="flex h-7 items-center text-xs text-muted">Drag across the chart for details · pinch to zoom</p>;
+    return <p className="flex h-12 items-center text-xs text-muted">Drag across the chart for details · pinch to zoom</p>;
   }
 
   return (
-    <div className="flex h-7 items-center gap-3 text-sm tabular-nums">
-      <span className="font-medium text-white">{formatClock(sample?.time ?? time)}</span>
-      {sample ? (
-        <>
-          <span className="flex items-center gap-1.5"><Dot className="bg-battery" />{sample.battery}%</span>
-          <span className="flex items-center gap-1.5"><Dot className="bg-load" />{formatNumber(sample.load)} W</span>
+    <div className="h-12 text-[13px] tabular-nums">
+      <div className="flex h-6 items-center gap-3">
+        <span className="text-sm font-medium text-white">{formatClock(sample?.time ?? time)}</span>
+        {sample ? (
           <span className="flex items-center gap-1.5">
             <Dot className={sample.gridOn ? "bg-grid" : "bg-subtle"} />
             Grid {sample.gridOn ? "on" : "off"}
           </span>
-        </>
-      ) : (
-        <span className="text-muted">No data</span>
+        ) : (
+          <span className="text-muted">No data</span>
+        )}
+        <button type="button" aria-label="Hide details" onClick={onClose} className="-mr-1 ml-auto flex size-7 items-center justify-center rounded-full text-muted active:bg-white/10">
+          <MdClose size={16} />
+        </button>
+      </div>
+      {sample && (
+        <div className="flex h-6 items-center gap-3">
+          <ReadoutValue dot="bg-battery" label="Battery" value={`${sample.battery}%`} />
+          <ReadoutValue dot="bg-load" label="Load" value={`${formatNumber(sample.load)} W`} />
+          <ReadoutValue dot="bg-solar" label="Solar" value={`${formatNumber(sample.solar)} W`} />
+        </div>
       )}
-      <button type="button" aria-label="Hide details" onClick={onClose} className="-mr-1 ml-auto flex size-7 items-center justify-center rounded-full text-muted active:bg-white/10">
-        <MdClose size={16} />
-      </button>
     </div>
   );
 };
