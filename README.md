@@ -61,6 +61,22 @@ Both scripts use `$JAVA_HOME`, falling back to Android Studio's JDK at
 Debug builds are signed with `android/app/debug.keystore`, the same key as the Expo build, so the
 APK installs over a debug build of the old app.
 
+```sh
+pnpm apk:release   # signed release APK at android/app/build/outputs/apk/release/app-release.apk
+```
+
+Release builds are signed with the keystore described in `android/keystore.properties`, which is
+gitignored:
+
+```properties
+storeFile=/Users/winter/keys/zoya-release.jks
+storePassword=…
+keyAlias=zoya
+keyPassword=…
+```
+
+A release build can't be installed over a debug build (different keys), so uninstall the app first.
+
 ## How it works
 
 - `src/lib/watchpower.ts`: WatchPower API client (request signing, response parsing).
